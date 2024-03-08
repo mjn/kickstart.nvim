@@ -90,9 +90,6 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Set to true if you have a Nerd Font installed
-vim.g.have_nerd_font = false
-
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -102,13 +99,16 @@ vim.g.have_nerd_font = false
 vim.opt.number = true
 -- You can also add relative line numbers, for help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
 -- Don't show the mode, since it's already in status line
 vim.opt.showmode = false
+
+-- Don't wrap lines
+vim.opt.wrap = false
 
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
@@ -120,6 +120,7 @@ vim.opt.breakindent = true
 
 -- Save undo history
 vim.opt.undofile = true
+vim.opt.undodir = os.getenv 'HOME' .. '/.vim/undodir'
 
 -- Case-insensitive searching UNLESS \C or capital in search
 vim.opt.ignorecase = true
@@ -151,12 +152,25 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- Disable swap files and backup
+vim.opt.swapfile = false
+vim.opt.backup = false
+
+-- Disable highlight on search, but enable incremental search highlighting
+vim.opt.hlsearch = false
+vim.opt.incsearch = true
+
+-- Tabs config
+-- vim.opt.expandtab = true
+-- vim.opt.tabstop = 2
+-- vim.opt.softtabstop = 2
+-- vim.opt.shiftwidth = 2
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
--- Set highlight on search, but clear on pressing <Esc> in normal mode
-vim.opt.hlsearch = true
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+-- netrw shortcut
+vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
@@ -173,10 +187,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -186,6 +200,23 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- Enable moving lines of code up or down
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv")
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv")
+vim.keymap.set('n', 'J', 'mzJ`z')
+
+-- Keep cursor in middle of screen when paging up/down
+vim.keymap.set('n', '<C-d>', '<C-d>zz')
+vim.keymap.set('n', '<C-u>', '<C-u>zz')
+vim.keymap.set('n', 'n', 'nzzzv')
+vim.keymap.set('n', 'N', 'Nzzzv')
+
+-- Overwrite and keep pasted text in register
+vim.keymap.set('x', '<leader>p', '"_dP')
+
+-- Git remapping
+vim.keymap.set('n', '<leader>gs', vim.cmd.Git)
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -221,15 +252,16 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
-require('lazy').setup({
+require('lazy').setup {
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  'tpope/vim-fugitive',
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
   -- keys can be used to configure plugin behavior/loading/etc.
   --
-  -- Use `opts = {}` to force a plugin to be loaded.
+  -- Use `opts = {}` to force a plugin to be loade.
   --
   --  This is equivalent to:
   --    require('Comment').setup({})
@@ -237,7 +269,7 @@ require('lazy').setup({
   -- "gc" to comment visual regions/lines
   { 'numToStr/Comment.nvim', opts = {} },
 
-  -- Here is a more advanced example where we pass configuration
+  -- Here is a more avanced example where we pass configuration
   -- options to `gitsigns.nvim`. This is equivalent to the following lua:
   --    require('gitsigns').setup({ ... })
   --
@@ -315,8 +347,10 @@ require('lazy').setup({
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
-      -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- Useful for getting pretty icons, but requires special font.
+      --  If you already have a Nerd Font, or terminal set up with fallback fonts
+      --  you can enable this
+      -- { 'nvim-tree/nvim-web-devicons' }
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -534,15 +568,16 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        jedi_language_server = {},
         -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+        -- ... etc. See `:help l spconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
+        tsserver = {},
+        eslint = {},
         --
 
         lua_ls = {
@@ -604,22 +639,75 @@ require('lazy').setup({
     end,
   },
 
+  { -- TypeScript tools
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {
+      settings = {
+        -- spawn additional tsserver instance to calculate diagnostics on it
+        separate_diagnostic_server = true,
+        -- "change"|"insert_leave" determine when the client asks the server about diagnostic
+        publish_diagnostic_on = 'insert_leave',
+        -- array of strings("fix_all"|"add_missing_imports"|"remove_unused"|
+        -- "remove_unused_imports"|"organize_imports") -- or string "all"
+        -- to include all supported code actions
+        -- specify commands exposed as code_actions
+        expose_as_code_action = {},
+        -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+        -- not exists then standard path resolution strategy is applied
+        tsserver_path = nil,
+        -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
+        -- (see 💅 `styled-components` support section)
+        tsserver_plugins = {},
+        -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
+        -- memory limit in megabytes or "auto"(basically no limit)
+        tsserver_max_memory = 'auto',
+        -- described below
+        tsserver_format_options = {},
+        tsserver_file_preferences = {},
+        -- locale of all tsserver messages, supported locales you can find here:
+        -- https://github.com/microsoft/TypeScript/blob/3c221fc086be52b19801f6e8d82596d04607ede6/src/compiler/utilitiesPublic.ts#L620
+        tsserver_locale = 'en',
+        -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
+        complete_function_calls = false,
+        include_completions_with_insert_text = true,
+        -- CodeLens
+        -- WARNING: Experimental feature also in VSCode, because it might hit performance of server.
+        -- possible values: ("off"|"all"|"implementations_only"|"references_only")
+        code_lens = 'off',
+        -- by default code lenses are displayed on all referencable values and for some of you it can
+        -- be too much this option reduce count of them by removing member references from lenses
+        disable_member_code_lens = true,
+        -- JSXCloseTag
+        -- WARNING: it is disabled by default (maybe you configuration or distro already uses nvim-ts-autotag,
+        -- that maybe have a conflict if enable this feature. )
+        jsx_close_tag = {
+          enable = false,
+          filetypes = { 'javascriptreact', 'typescriptreact' },
+        },
+      },
+    },
+  },
+
   { -- Autoformat
     'stevearc/conform.nvim',
     opts = {
       notify_on_error = false,
       format_on_save = {
         timeout_ms = 500,
-        lsp_fallback = true,
+        lsp_fallback = false,
       },
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'black' },
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
+        javascript = { { 'prettierd', 'prettier' } },
+        typescript = { { 'prettierd', 'prettier' } },
+        javascriptreact = { { 'prettierd', 'prettier' } },
+        typescriptreact = { { 'prettierd', 'prettier' } },
       },
     },
   },
@@ -726,9 +814,7 @@ require('lazy').setup({
     lazy = false, -- make sure we load this during startup if it is your main colorscheme
     priority = 1000, -- make sure to load this before all the other start plugins
     config = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+      -- Load the colorscheme here
       vim.cmd.colorscheme 'tokyonight-night'
 
       -- You can configure highlights by doing something like
@@ -761,8 +847,7 @@ require('lazy').setup({
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
       local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      statusline.setup()
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
@@ -785,7 +870,7 @@ require('lazy').setup({
 
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup {
-        ensure_installed = { 'bash', 'c', 'html', 'lua', 'markdown', 'vim', 'vimdoc' },
+        ensure_installed = { 'bash', 'c', 'html', 'lua', 'markdown', 'vim', 'vimdoc', 'ruby', 'javascript', 'typescript', 'python' },
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = { enable = true },
@@ -819,27 +904,7 @@ require('lazy').setup({
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   -- { import = 'custom.plugins' },
-}, {
-  ui = {
-    -- If you have a Nerd Font, set icons to an empty table which will use the
-    -- default lazy.nvim defined Nerd Font icons otherwise define a unicode icons table
-    icons = vim.g.have_nerd_font and {} or {
-      cmd = '⌘',
-      config = '🛠',
-      event = '📅',
-      ft = '📂',
-      init = '⚙',
-      keys = '🗝',
-      plugin = '🔌',
-      runtime = '💻',
-      require = '🌙',
-      source = '📄',
-      start = '🚀',
-      task = '📌',
-      lazy = '💤 ',
-    },
-  },
-})
+}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
