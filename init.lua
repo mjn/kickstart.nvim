@@ -161,10 +161,10 @@ vim.opt.hlsearch = false
 vim.opt.incsearch = true
 
 -- Tabs config
--- vim.opt.expandtab = true
--- vim.opt.tabstop = 2
--- vim.opt.softtabstop = 2
--- vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -218,6 +218,17 @@ vim.keymap.set('x', '<leader>p', '"_dP')
 -- Git remapping
 vim.keymap.set('n', '<leader>gs', vim.cmd.Git)
 
+-- Diff helpers
+vim.keymap.set('n', '<leader>dg', vim.cmd.diffget)
+vim.keymap.set('n', '<leader>dp', vim.cmd.diffput)
+
+-- Accept copilot suggestions with <C-t> instead of <TAB>
+vim.keymap.set('i', '<C-t>', 'copilot#Accept("")', {
+  expr = true,
+  replace_keycodes = false,
+})
+vim.g.copilot_no_tab_map = true
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -256,6 +267,11 @@ require('lazy').setup {
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
   'tpope/vim-fugitive',
+  -- 'steelsojka/pears.nvim', -- Auto pairs
+  'windwp/nvim-autopairs', -- Auto pairs
+
+  -- Github copilot
+  'github/copilot.vim',
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -430,6 +446,22 @@ require('lazy').setup {
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
+    end,
+  },
+
+  { -- NvimTree
+    'nvim-tree/nvim-tree.lua',
+    version = '*',
+    lazy = false,
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function()
+      require('nvim-tree').setup {
+        view = {
+          width = 35,
+        },
+      }
     end,
   },
 
@@ -700,7 +732,7 @@ require('lazy').setup {
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        python = { 'black' },
+        python = { 'ruff' },
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
@@ -870,7 +902,19 @@ require('lazy').setup {
 
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup {
-        ensure_installed = { 'bash', 'c', 'html', 'lua', 'markdown', 'vim', 'vimdoc', 'ruby', 'javascript', 'typescript', 'python' },
+        ensure_installed = {
+          'bash',
+          'c',
+          'html',
+          'lua',
+          'markdown',
+          'vim',
+          'vimdoc',
+          'ruby',
+          'javascript',
+          'typescript',
+          'python',
+        },
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = { enable = true },
@@ -881,9 +925,13 @@ require('lazy').setup {
       -- with nvim-treesitter. You should go explore a few and see what interests you:
       --
       --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-      --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+
+      require('treesitter-context').setup {}
     end,
+  },
+  { -- Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
+    'nvim-treesitter/nvim-treesitter-context',
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
