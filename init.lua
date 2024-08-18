@@ -465,6 +465,12 @@ require('lazy').setup {
     end,
   },
 
+  { -- SchemaStore
+    'b0o/SchemaStore.nvim',
+    lazy = true,
+    version = false, -- last release is way too old
+  },
+
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
     dependencies = {
@@ -635,6 +641,22 @@ require('lazy').setup {
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
+            },
+          },
+        },
+
+        jsonls = {
+          on_new_config = function(new_config)
+            -- lazy-load schemastore when needed
+            new_config.settings.json.schemas = new_config.settings.json.schemas or {}
+            vim.list_extend(new_config.settings.json.schemas, require('schemastore').json.schemas())
+          end,
+          settings = {
+            json = {
+              format = {
+                enable = true,
+              },
+              validate = { enable = true },
             },
           },
         },
@@ -914,6 +936,7 @@ require('lazy').setup {
           'javascript',
           'typescript',
           'python',
+          'json5',
         },
         -- Autoinstall languages that are not installed
         auto_install = true,
@@ -932,6 +955,15 @@ require('lazy').setup {
   },
   { -- Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     'nvim-treesitter/nvim-treesitter-context',
+  },
+
+  { -- Markdown Preview plugin
+    'iamcco/markdown-preview.nvim',
+    cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
+    ft = { 'markdown' },
+    build = function()
+      vim.fn['mkdp#util#install']()
+    end,
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
